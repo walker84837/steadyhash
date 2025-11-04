@@ -3,7 +3,9 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum ShaSumError {
     /// Error indicating that an invalid SHA checksum type has been provided.
-    #[error("Invalid checksum type 'SHA-{0}'. The only supported types are SHA1, SHA256 and SHA512")]
+    #[error(
+        "Invalid checksum type 'SHA-{0}'. The only supported types are SHA1, SHA256 and SHA512"
+    )]
     InvalidChecksumType(i32),
 
     /// Error indicating that something went wrong when it shouldn't. Alternative to panic!()
@@ -12,9 +14,27 @@ pub enum ShaSumError {
 }
 
 #[derive(Error, Debug)]
+pub enum Sha3SumError {
+    /// Error indicating that an invalid SHA3 checksum type has been provided.
+    #[error("Invalid checksum type 'SHA3-{0}'. The only supported types are SHA3-224, SHA3-256, SHA3-384 and SHA3-512")]
+    InvalidChecksumType(i32),
+
+    /// Error indicating that something went wrong when it shouldn't. Alternative to panic!()
+    #[error("Something went unexpectedly wrong: {0}.")]
+    UnexpectedError(String),
+}
+
+#[derive(Error, Debug)]
+pub enum Md5SumError {
+    /// Error indicating that something went wrong when it shouldn't. Alternative to panic!()
+    #[error("Something went unexpectedly wrong: {0}.")]
+    UnexpectedError(String),
+}
+
+#[derive(Error, Debug)]
 pub enum B2SumError {
-    /// Error indicating that an invalid Blake checksum type has been provided. 
-    #[error("Invalid checksum type 'Blake2b-{0}'. The only supported types are Blake2b-256 and Blake2b-512.")]
+    /// Error indicating that an invalid Blake2b checksum type has been provided.
+    #[error("Invalid checksum type 'BLAKE2B-{0}'. The only supported types are BLAKE2B-256 and BLAKE2B-512")]
     InvalidChecksumType(i32),
 
     /// Error indicating that something went wrong when it shouldn't. Alternative to panic!()

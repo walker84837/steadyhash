@@ -1,48 +1,52 @@
 use crate::errors::ShaSumError;
+use crate::hashing::Hasher;
+use digest::Digest;
 use sha1::Sha1;
-use sha2::{Digest, Sha256, Sha512};
+use sha2::{Sha256, Sha512};
+
+/// Hashes the data using the specified checksum type
+macro_rules! hash_match {
+    ($bits:expr, $data:expr) => {
+        match $bits {
+            160 => hex::encode(Sha1::digest($data)),
+            256 => hex::encode(Sha256::digest($data)),
+            512 => hex::encode(Sha512::digest($data)),
+            _ => unreachable!(),
+        }
+    };
+}
 
 pub struct ShaSum<'a> {
-    /// Bit length of the checksum
-    checksum_type: i32,
+    /// Bit length of the checksum (160, 256, or 512)
+    checksum_bits: usize,
 
     /// Data to process
     data: &'a [u8],
 }
 
-impl ShaSum<'_> {
-    pub fn new(checksum_type: i32, data: &[u8]) -> Result<ShaSum<'_>, ShaSumError> {
-        if ![160, 256, 512].contains(&checksum_type) {
+impl<'a> Hasher<'a, ShaSumError> for ShaSum<'a> {
+    const VALID_VALUES: &'static [usize] = &[160, 256, 512];
+
+    fn get_checksum(&self) -> Result<String, ShaSumError> {
+        match self.checksum_bits {
+            bits @ (160 | 256 | 512) => Ok(hash_match!(bits, self.data)),
+            _ => Err(ShaSumError::InvalidChecksumType(self.checksum_bits as i32)),
+        }
+    }
+}
+
+impl<'a> ShaSum<'a> {
+    /// Keep `new(checksum_type: i32, ...)` to preserve external API.
+    pub fn new(checksum_type: i32, data: &'a [u8]) -> Result<ShaSum<'a>, ShaSumError> {
+        let bits = checksum_type as usize;
+        if !Self::VALID_VALUES.contains(&bits) {
             return Err(ShaSumError::InvalidChecksumType(checksum_type));
         }
 
         Ok(ShaSum {
-            checksum_type,
+            checksum_bits: bits,
             data,
         })
-    }
-
-    pub fn get_checksum(&self) -> Result<String, ShaSumError> {
-        match self.checksum_type {
-            512 => { // SHA-512
-                let mut hasher = Sha512::new();
-                hasher.update(self.data);
-                Ok(format!("{:x}", hasher.finalize()))
-            }
-            256 => { // SHA-256
-                let mut hasher = Sha256::new();
-                hasher.update(self.data);
-                Ok(format!("{:x}", hasher.finalize()))
-            }
-            160 => { // SHA-1
-                let mut hasher = Sha1::new();
-                hasher.update(self.data);
-                Ok(format!("{:x}", hasher.finalize()))
-            }
-            _ => Err(ShaSumError::UnexpectedError(
-                "Somehow, the options weren't handled correctly.".to_string(),
-            )),
-        }
     }
 }
 

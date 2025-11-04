@@ -8,7 +8,8 @@ use std::{
 
 mod errors;
 mod hashing;
-use hashing::{blake2b::Blake2b, shasum::ShaSum};
+use crate::hashing::Hasher;
+use hashing::{blake2b::Blake2b, md5::Md5Sum, sha3::Sha3Sum, shasum::ShaSum};
 
 #[derive(Parser)]
 #[clap(
@@ -57,57 +58,159 @@ fn basename(file: &Path) -> Result<String> {
 fn main() -> Result<()> {
     let args = Args::parse();
 
-    for file in &args.file_path {
-        let mut contents = Vec::new();
+    if args.check {
+        check_files(&args)?;
+    } else {
+        for file in &args.file_path {
+            let mut contents = Vec::new();
 
-        if !args.stdin {
-            let mut reader = BufReader::new(File::open(file)?);
-            if args.binary {
+            if !args.stdin {
+                let mut reader = BufReader::new(File::open(file)?);
+
                 reader.read_to_end(&mut contents)?;
             } else {
-                reader.read_to_end(&mut contents)?;
+                io::stdin().read_to_end(&mut contents)?;
             }
-        } else {
-            io::stdin().read_to_end(&mut contents)?;
+
+            match args.checksum_type.as_str() {
+                "sha" => {
+                    let hasher = ShaSum::new(args.bit_length, &contents)?;
+
+                    let checksum = hasher.get_checksum()?;
+
+                    let r#type = if args.bit_length == 160 {
+                        1
+                    } else {
+                        args.bit_length
+                    };
+
+                    if args.bsd {
+                        println!("SHA{} ({}) = {}", r#type, basename(file)?, checksum);
+                    } else {
+                        println!("{} {}", checksum, basename(file)?);
+                    }
+                }
+
+                "blake" | "b2" | "blake2" => {
+                    let hasher = Blake2b::new(args.bit_length, &contents)?;
+
+                    let checksum = hasher.get_checksum()?;
+
+                    if args.bsd {
+                        println!(
+                            "BLAKE2b-{} ({}) = {}",
+                            args.bit_length,
+                            basename(file)?,
+                            checksum
+                        );
+                    } else {
+                        println!("{}  {}", checksum, basename(file)?);
+                    }
+                }
+
+                "md5" => {
+                    let hasher = Md5Sum::new(&contents);
+
+                    let checksum = hasher.get_checksum()?;
+
+                    if args.bsd {
+                        println!("MD5 ({}) = {}", basename(file)?, checksum);
+                    } else {
+                        println!("{}  {}", checksum, basename(file)?);
+                    }
+                }
+
+                "sha3" => {
+                    let hasher = Sha3Sum::new(args.bit_length, &contents)?;
+
+                    let checksum = hasher.get_checksum()?;
+
+                    if args.bsd {
+                        println!(
+                            "SHA3-{} ({}) = {}",
+                            args.bit_length,
+                            basename(file)?,
+                            checksum
+                        );
+                    } else {
+                        println!("{}  {}", checksum, basename(file)?);
+                    }
+                }
+
+                _ => bail!("Invalid checksum type. Possible values are `sha` or `blake`."),
+            }
         }
+    }
 
-        match args.checksum_type.as_str() {
-            "sha" => {
-                let hasher = ShaSum::new(args.bit_length, &contents)?;
-                let checksum = hasher.get_checksum()?;
+    Ok(())
+}
 
-                let r#type = if args.bit_length == 160 {
-                    1
-                } else {
-                    args.bit_length
-                };
+fn check_files(args: &Args) -> Result<()> {
+    for file in &args.file_path {
+        let mut reader = BufReader::new(File::open(file)?);
 
-                if args.bsd {
-                    println!(
-                        "SHA{} ({}) = {}",
-                        r#type,
-                        basename(&file)?,
-                        checksum
-                    );
-                } else {
-                    println!("{} {}", checksum, basename(&file)?);
-                }
+        let mut contents = String::new();
+
+        reader.read_to_string(&mut contents)?;
+
+        for line in contents.lines() {
+            let parts: Vec<&str> = line.split_whitespace().collect();
+
+            if parts.len() < 2 {
+                continue;
             }
-            "blake" | "b2" | "blake2" => {
-                let hasher = Blake2b::new(args.bit_length, &contents)?;
-                let checksum = hasher.get_checksum()?;
-                if args.bsd {
-                    println!(
-                        "BLAKE2b-{} ({}) = {}",
-                        args.bit_length,
-                        basename(&file)?,
-                        checksum
-                    );
-                } else {
-                    println!("{}  {}", checksum, basename(&file)?);
+
+            let (expected_checksum, file_path) = if parts.len() >= 2 && parts[1].starts_with("(") {
+                // BSD style
+
+                let file_path = parts[1].trim_start_matches('(').trim_end_matches(')');
+
+                (parts[3], file_path)
+            } else {
+                // default style
+
+                (parts[0], parts[1])
+            };
+
+            let mut file_contents = Vec::new();
+
+            let mut reader = BufReader::new(File::open(file_path)?);
+
+            reader.read_to_end(&mut file_contents)?;
+
+            let actual_checksum = match args.checksum_type.as_str() {
+                "sha" => {
+                    let hasher = ShaSum::new(args.bit_length, &file_contents)?;
+
+                    hasher.get_checksum()?
                 }
+
+                "blake" | "b2" | "blake2" => {
+                    let hasher = Blake2b::new(args.bit_length, &file_contents)?;
+
+                    hasher.get_checksum()?
+                }
+
+                "md5" => {
+                    let hasher = Md5Sum::new(&file_contents);
+
+                    hasher.get_checksum()?
+                }
+
+                "sha3" => {
+                    let hasher = Sha3Sum::new(args.bit_length, &file_contents)?;
+
+                    hasher.get_checksum()?
+                }
+
+                _ => bail!("Invalid checksum type."),
+            };
+
+            if actual_checksum == expected_checksum {
+                println!("{}: OK", file_path);
+            } else {
+                println!("{}: FAILED", file_path);
             }
-            _ => bail!("Invalid checksum type. Possible values are `sha` or `blake`."),
         }
     }
 
