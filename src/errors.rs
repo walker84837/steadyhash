@@ -41,3 +41,16 @@ pub enum B2SumError {
     #[error("Something went unexpectedly wrong: {0}.")]
     UnexpectedError(String),
 }
+
+#[derive(Debug)]
+pub struct ParseChecksumError {
+    pub value: String,
+}
+
+impl std::fmt::Display for ParseChecksumError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "invalid enum variant: {}", self.value)
+    }
+}
+
+impl std::error::Error for ParseChecksumError {}
