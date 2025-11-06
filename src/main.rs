@@ -1,7 +1,6 @@
-use anyhow::{anyhow, bail, Result};
+use anyhow::{anyhow, Result};
 use clap::Parser;
 use std::{
-    convert::Infallible,
     fs::File,
     io::{self, BufReader, Read},
     path::{Path, PathBuf},
@@ -75,13 +74,14 @@ impl FromStr for Checksum {
 
 /// Get the file name in a path, like the `basename` Linux command
 fn basename(file: &Path) -> Option<String> {
-    Some(file
-        .file_name()?
-        .to_string_lossy()
-        .into_owned()
-        .chars()
-        .filter(|&x| x != '\u{FFFD}')
-        .collect())
+    Some(
+        file.file_name()?
+            .to_string_lossy()
+            .into_owned()
+            .chars()
+            .filter(|&x| x != '\u{FFFD}')
+            .collect(),
+    )
 }
 
 fn main() -> Result<()> {
@@ -130,8 +130,6 @@ fn check_files(checksum: Checksum, args: &Args) -> Result<()> {
             let mut reader = BufReader::new(File::open(file_path)?);
 
             reader.read_to_end(&mut file_contents)?;
-
-            
 
             let actual_checksum = match checksum {
                 Checksum::Sha => {
@@ -196,9 +194,18 @@ fn checksum_files(checksum: Checksum, args: &Args) -> Result<()> {
 
                 // TODO: move overall basename assignment to something else to avoid code duplication
                 if args.bsd {
-                    println!("SHA{} ({}) = {}", r#type, basename(file).ok_or_else(|| anyhow!("File not found"))?, checksum);
+                    println!(
+                        "SHA{} ({}) = {}",
+                        r#type,
+                        basename(file).ok_or_else(|| anyhow!("File not found"))?,
+                        checksum
+                    );
                 } else {
-                    println!("{} {}", checksum, basename(file).ok_or_else(|| anyhow!("File not found"))?);
+                    println!(
+                        "{} {}",
+                        checksum,
+                        basename(file).ok_or_else(|| anyhow!("File not found"))?
+                    );
                 }
             }
 
@@ -215,7 +222,11 @@ fn checksum_files(checksum: Checksum, args: &Args) -> Result<()> {
                         checksum
                     );
                 } else {
-                    println!("{}  {}", checksum, basename(file).ok_or_else(|| anyhow!("File not found"))?);
+                    println!(
+                        "{}  {}",
+                        checksum,
+                        basename(file).ok_or_else(|| anyhow!("File not found"))?
+                    );
                 }
             }
 
@@ -225,9 +236,17 @@ fn checksum_files(checksum: Checksum, args: &Args) -> Result<()> {
                 let checksum = hasher.get_checksum()?;
 
                 if args.bsd {
-                    println!("MD5 ({}) = {}", basename(file).ok_or_else(|| anyhow!("File not found"))?, checksum);
+                    println!(
+                        "MD5 ({}) = {}",
+                        basename(file).ok_or_else(|| anyhow!("File not found"))?,
+                        checksum
+                    );
                 } else {
-                    println!("{}  {}", checksum, basename(file).ok_or_else(|| anyhow!("File not found"))?);
+                    println!(
+                        "{}  {}",
+                        checksum,
+                        basename(file).ok_or_else(|| anyhow!("File not found"))?
+                    );
                 }
             }
 
@@ -244,7 +263,11 @@ fn checksum_files(checksum: Checksum, args: &Args) -> Result<()> {
                         checksum
                     );
                 } else {
-                    println!("{}  {}", checksum, basename(file).ok_or_else(|| anyhow!("File not found"))?);
+                    println!(
+                        "{}  {}",
+                        checksum,
+                        basename(file).ok_or_else(|| anyhow!("File not found"))?
+                    );
                 }
             }
         }
