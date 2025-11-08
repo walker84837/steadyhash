@@ -1,14 +1,12 @@
-# steadyhash: reliable file integrity checker
+# steadyhash
 
-SteadyHash provides a straightforward way to generate and verify SHA-1, SHA-256,
-SHA-512, Blake2b-512 and Blake2b-256 checksums.
+SteadyHash is a reimagination of the Coreutils' `b2sum`, `sha256sum` (and so on) utilities. It aims to keep compatibility with their formats for checksum files. It provides a straightforward way to generate and verify SHA-1, SHA-256, SHA-512, SHA3-256, SHA3-512, Blake2b-512, Blake2b-256 and MD5 checksums.
 
 ## Usage
 
 To use this utility, follow these steps:
 
-1.  Ensure you have Rust and Cargo installed. If not, you can install them from
-    Rust's [official website](https://www.rust-lang.org/tools/install).
+1.  Ensure you have Rust and Cargo installed. If not, you can install them from Rust's [official website](https://www.rust-lang.org/tools/install).
 2.  Clone this repository to your local machine.
 3.  Navigate to the project directory.
 4.  Run `cargo run --release` to run and build the utility.
@@ -25,25 +23,16 @@ Arguments: `[FILEs]... : the files to process`
 
 Options:
 
-  - `-t, --type`: the type of SHA checksum. Possible values are:
-    - `sha`
-    - `blake`
-    - `b2`
-    - `blake2`
-  - `-l, --length`: the bit length of the checksum:
-    - The valid values for `sha` are:
-        - `160`
-        - `256`
-        - `512`
-    - The valid values for `blake` are:
-        - `256`
-        - `512`
-  - `-c, --check`: read checksums from the FILEs and check them (unimplemented)
-  - `--tag`: create a BSD-style checksum
-  - `--binary`: read in binary mode (does nothing)
-  - `-s, --stdin`: read data from stdin
-  - `-h, --help`: print help
-  - `-V, --version`: print version
+|Flag/Option|Description|Possible Values|
+|---|---|---|
+|`-l, --length`|The bit length of the checksum|`sha`: `160`, `256`, `512`; `sha3`: `256`, `512`; `blake`: `256`, `512`|
+|`-t, --type`|The type of checksum|`sha`, `sha3`, `md5`, `blake`, `b2`, `blake2`, `blake2b`|
+|`-c, --check`|Read checksums from the FILEs and check them|-|
+|`--bsd`|Create a BSD-style checksum|-|
+|`--binary`|Read in binary mode|-|
+|`-s, --stdin`|Read data from stdin|-|
+|`-h, --help`|Print help|-|
+|`-V, --version`|Print version|-|
 
 #### Examples
 
@@ -59,25 +48,50 @@ Options:
 
   - Generate a SHA1 BSD-style checksum:
     ```console
-    $ steadyhash -l 160 -t sha --tag foo.bar
-    ````
+    $ steadyhash -l 160 -t sha --bsd foo.bar
+    ```
 
-## Roadmap
+  - Generate an MD5 checksum:
+    ```console
+    $ steadyhash -t md5 foo.bar
+    ```
+
+  - Generate a SHA3-256 checksum:
+    ```console
+    $ steadyhash -l 256 -t sha3 foo.bar
+    ```
+
+### Checking checksums
+
+To check checksums from a file, use the following command:
+
+Usage: `steadyhash [OPTIONS] --type <CHECKSUM> --check [FILEs]...`
+
+#### Examples
+
+  - Check SHA256 checksums from a file:
+    ```console
+    $ steadyhash -l 256 -t sha --check checksums.txt
+    ```
+
+  - Check MD5 checksums from a file:
+    ```console
+    $ steadyhash -t md5 --check checksums.txt
+    ```
+
+## Roadmap & Contributing
+
+Contributions are warmly welcome! Feel free to submit pull requests with improvements or bug fixes, and if you're unsure about something, open an issue to discuss it further.
 
   - [X] Support for multiple platforms
-  - [ ] Support for checking checksums
-  - [ ] Configuration (maybe)
+  - [X] Support for checking checksums
+
+Before contributing, please read [the contribution guidelines](CONTRIBUTING.md).
 
 ## Support
 
-If you encounter any issues or have questions about this utility, feel free to
-[open an issue](https://github.com/walker84837/steadyhash/issues).
+If you encounter any issues or have questions about this utility, feel free to [open an issue](https://github.com/walker84837/steadyhash/issues).
 
 ## License
 
-This project is licensed under the [GPL-3.0](LICENSE.md).
-
-Contributions are welcome. Feel free to fork this repository and submit pull
-requests with improvements or bug fixes. If you're unsure about something, open
-an issue to discuss it further. Thank you to all contributors who can help make
-this project better\!
+This project is licensed under the [EUPL-1.2](LICENSE.md).
