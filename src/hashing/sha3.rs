@@ -10,34 +10,32 @@ pub struct Sha3Sum<'a> {
     data: &'a [u8],
 }
 
-impl<'a> Hasher<'a, Sha3SumError> for Sha3Sum<'a> {
+impl<'a> Hasher for Sha3Sum<'a> {
     const VALID_VALUES: &'static [usize] = &[224, 256, 384, 512];
 
-    fn get_checksum(&self) -> Result<String, Sha3SumError> {
+    fn get_checksum(&self) -> String {
         match self.checksum_type {
             224 => {
                 let mut hasher = Sha3_224::new();
                 hasher.update(self.data);
-                Ok(format!("{:x}", hasher.finalize()))
+                format!("{:x}", hasher.finalize())
             }
             256 => {
                 let mut hasher = Sha3_256::new();
                 hasher.update(self.data);
-                Ok(format!("{:x}", hasher.finalize()))
+                format!("{:x}", hasher.finalize())
             }
             384 => {
                 let mut hasher = Sha3_384::new();
                 hasher.update(self.data);
-                Ok(format!("{:x}", hasher.finalize()))
+                format!("{:x}", hasher.finalize())
             }
             512 => {
                 let mut hasher = Sha3_512::new();
                 hasher.update(self.data);
-                Ok(format!("{:x}", hasher.finalize()))
+                format!("{:x}", hasher.finalize())
             }
-            _ => Err(Sha3SumError::UnexpectedError(
-                "invalid sha3sum type".to_string(),
-            )),
+            _ => unreachable!(),
         }
     }
 }

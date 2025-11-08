@@ -137,25 +137,25 @@ fn check_files(checksum: Checksum, args: &Args, file: String) -> Result<()> {
             Checksum::Sha => {
                 let hasher = ShaSum::new(args.bit_length, &file_contents)?;
 
-                hasher.get_checksum()?
+                hasher.get_checksum()
             }
 
             Checksum::Blake2b => {
                 let hasher = Blake2b::new(args.bit_length, &file_contents)?;
 
-                hasher.get_checksum()?
+                hasher.get_checksum()
             }
 
             Checksum::Md5 => {
                 let hasher = Md5Sum::new(&file_contents);
 
-                hasher.get_checksum()?
+                hasher.get_checksum()
             }
 
             Checksum::Sha3 => {
                 let hasher = Sha3Sum::new(args.bit_length, &file_contents)?;
 
-                hasher.get_checksum()?
+                hasher.get_checksum()
             }
         };
 
@@ -184,7 +184,7 @@ fn checksum_files(checksum: Checksum, args: &Args, file: String) -> Result<()> {
         Checksum::Sha => {
             let hasher = ShaSum::new(args.bit_length, &contents)?;
 
-            let checksum = hasher.get_checksum()?;
+            let checksum = hasher.get_checksum();
 
             let r#type = if args.bit_length == 160 {
                 1
@@ -203,7 +203,7 @@ fn checksum_files(checksum: Checksum, args: &Args, file: String) -> Result<()> {
         Checksum::Blake2b => {
             let hasher = Blake2b::new(args.bit_length, &contents)?;
 
-            let checksum = hasher.get_checksum()?;
+            let checksum = hasher.get_checksum();
 
             if args.bsd {
                 println!("BLAKE2b-{} ({}) = {}", args.bit_length, file, checksum);
@@ -215,7 +215,7 @@ fn checksum_files(checksum: Checksum, args: &Args, file: String) -> Result<()> {
         Checksum::Md5 => {
             let hasher = Md5Sum::new(&contents);
 
-            let checksum = hasher.get_checksum()?;
+            let checksum = hasher.get_checksum();
 
             if args.bsd {
                 println!("MD5 ({}) = {}", file, checksum);
@@ -227,7 +227,7 @@ fn checksum_files(checksum: Checksum, args: &Args, file: String) -> Result<()> {
         Checksum::Sha3 => {
             let hasher = Sha3Sum::new(args.bit_length, &contents)?;
 
-            let checksum = hasher.get_checksum()?;
+            let checksum = hasher.get_checksum();
 
             if args.bsd {
                 println!("SHA3-{} ({}) = {}", args.bit_length, file, checksum);

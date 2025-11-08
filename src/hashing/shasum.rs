@@ -24,13 +24,13 @@ pub struct ShaSum<'a> {
     data: &'a [u8],
 }
 
-impl<'a> Hasher<'a, ShaSumError> for ShaSum<'a> {
+impl<'a> Hasher for ShaSum<'a> {
     const VALID_VALUES: &'static [usize] = &[160, 256, 512];
 
-    fn get_checksum(&self) -> Result<String, ShaSumError> {
+    fn get_checksum(&self) -> String {
         match self.checksum_bits {
-            bits @ (160 | 256 | 512) => Ok(hash_match!(bits, self.data)),
-            _ => Err(ShaSumError::InvalidChecksumType(self.checksum_bits as i32)),
+            bits @ (160 | 256 | 512) => hash_match!(bits, self.data),
+            _ => unreachable!(),
         }
     }
 }
@@ -63,7 +63,7 @@ mod tests {
         // echo 'i use arch btw' | sha512sum -b
         let expected_checksum = "2ddbe9f9af5a630d3734ce469fac19088e8d0242541768630777de5c56dc4053d346a67527cb95de3ab094d6862f393392ba26bed459d9ad149b423aeae552a2"
             .to_owned();
-        let actual_checksum = checksummer.get_checksum().unwrap();
+        let actual_checksum = checksummer.get_checksum();
         assert_eq!(actual_checksum, expected_checksum);
     }
 
@@ -76,7 +76,7 @@ mod tests {
         let expected_checksum =
             "80799b90f4c070668b52df31830b60ef767bb039000eec4266f285d498002bb5".to_owned();
 
-        let actual_checksum = checksummer.get_checksum().unwrap();
+        let actual_checksum = checksummer.get_checksum();
         assert_eq!(actual_checksum, expected_checksum);
     }
 
@@ -88,7 +88,7 @@ mod tests {
 
         let expected_checksum = "821609590ef05d00b20c5f4c5a28c56627480eb7".to_owned();
 
-        let actual_checksum = checksummer.get_checksum().unwrap();
+        let actual_checksum = checksummer.get_checksum();
         assert_eq!(actual_checksum, expected_checksum);
     }
 }

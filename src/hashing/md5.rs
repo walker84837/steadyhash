@@ -1,4 +1,3 @@
-use crate::errors::Md5SumError;
 use crate::hashing::Hasher;
 
 pub struct Md5Sum<'a> {
@@ -6,12 +5,12 @@ pub struct Md5Sum<'a> {
     data: &'a [u8],
 }
 
-impl<'a> Hasher<'a, Md5SumError> for Md5Sum<'a> {
+impl<'a> Hasher for Md5Sum<'a> {
     const VALID_VALUES: &'static [usize] = &[128];
 
-    fn get_checksum(&self) -> Result<String, Md5SumError> {
+    fn get_checksum(&self) -> String {
         let a = md5::compute(self.data);
-        Ok(format!("{:x}", a))
+        format!("{:x}", a)
     }
 }
 
