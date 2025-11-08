@@ -1,7 +1,7 @@
 ---
 name: Feature Request
 about: Suggest an idea for this project
-title: "[FEATURE] "
+title: ""
 labels: enhancement
 assignees: ''
 ---
@@ -14,15 +14,10 @@ A clear and concise description of the feature you are proposing.
 
 Explain why this feature would be beneficial for the project.
 
-## Implementation Ideas
+## Implementation Ideas and Additional Context
 
-If you have any ideas on how this feature could be implemented, share them here.
+If you have any ideas on how this feature could be implemented, or any other relevant context or screenshots, share them here.
 
 ## Alternatives or Workarounds
 
 Are there any alternative solutions or workarounds you've considered?
-
-## Additional Context
-
-Add any other context or screenshots about the feature request here.
-
