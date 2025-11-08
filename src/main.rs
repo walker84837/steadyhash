@@ -18,8 +18,15 @@ use hashing::{blake2b::Blake2b, md5::Md5Sum, sha3::Sha3Sum, shasum::ShaSum};
     about = "Pure Rust utility which handles various checksum types"
 )]
 struct Args {
-    #[clap(short = 'l', long = "length", help = "the bit length of the checksum")]
-    bit_length: i32,
+    #[clap(
+        short = 'l',
+        long = "length",
+        help = "the bit length of the checksum",
+        required_if_eq("checksum_type", "sha"),
+        required_if_eq("checksum_type", "sha3"),
+        required_if_eq("checksum_type", "blake2b")
+    )]
+    bit_length: Option<usize>,
 
     #[clap(
         short = 't',
@@ -34,7 +41,7 @@ struct Args {
     #[clap(short, long, help = "read checksums from the FILEs and check them")]
     check: bool,
 
-    #[clap(long = "tag", help = "create a BSD-style checksum")]
+    #[clap(long = "bsd", help = "create a BSD-style checksum")]
     bsd: bool,
 
     #[clap(long, help = "read in binary mode")]
@@ -84,7 +91,7 @@ fn basename(file: &Path) -> Option<String> {
     )
 }
 
-fn calculate_checksum(checksum: Checksum, bit_length: i32, data: &[u8]) -> Result<String> {
+fn calculate_checksum(checksum: Checksum, bit_length: usize, data: &[u8]) -> Result<String> {
     Ok(match checksum {
         Checksum::Sha => ShaSum::new(bit_length, data)?.get_checksum(),
         Checksum::Blake2b => Blake2b::new(bit_length, data)?.get_checksum(),
@@ -97,20 +104,25 @@ fn main() -> Result<()> {
     let args = Args::parse();
 
     let checksum = Checksum::from_str(&args.checksum_type)?;
+    let bit_length = if checksum == Checksum::Md5 {
+        128
+    } else {
+        args.bit_length.unwrap()
+    };
 
     for file in &args.file_path {
         let file = basename(file).ok_or_else(|| anyhow!("File not found"))?;
         if args.check {
-            check_files(checksum, &args, file)?;
+            check_files(checksum, file, bit_length)?;
         } else {
-            checksum_files(checksum, &args, file)?;
+            checksum_files(checksum, &args, file, bit_length)?;
         }
     }
 
     Ok(())
 }
 
-fn check_files(checksum: Checksum, args: &Args, file: String) -> Result<()> {
+fn check_files(checksum: Checksum, file: String, bit_length: usize) -> Result<()> {
     let mut reader = BufReader::new(File::open(file)?);
 
     let mut contents = String::new();
@@ -142,7 +154,7 @@ fn check_files(checksum: Checksum, args: &Args, file: String) -> Result<()> {
 
         reader.read_to_end(&mut file_contents)?;
 
-        let actual_checksum = calculate_checksum(checksum, args.bit_length, &file_contents)?;
+        let actual_checksum = calculate_checksum(checksum, bit_length, &file_contents)?;
 
         if actual_checksum == expected_checksum {
             println!("{file_path}: OK");
@@ -154,7 +166,7 @@ fn check_files(checksum: Checksum, args: &Args, file: String) -> Result<()> {
     Ok(())
 }
 
-fn checksum_files(checksum: Checksum, args: &Args, file: String) -> Result<()> {
+fn checksum_files(checksum: Checksum, args: &Args, file: String, bit_length: usize) -> Result<()> {
     let mut contents = Vec::new();
 
     if args.stdin {
@@ -165,18 +177,16 @@ fn checksum_files(checksum: Checksum, args: &Args, file: String) -> Result<()> {
         reader.read_to_end(&mut contents)?;
     }
 
-    let checksum_str = calculate_checksum(checksum, args.bit_length, &contents)?;
+    let checksum_str = calculate_checksum(checksum, bit_length, &contents)?;
 
     match checksum {
         Checksum::Sha => {
-            let r#type = if args.bit_length == 160 {
-                1
-            } else {
-                args.bit_length
-            };
-
             if args.bsd {
-                println!("SHA{type} ({file}) = {checksum_str}");
+                if bit_length == 160 {
+                    println!("SHA1 ({}) = {}", file, checksum_str);
+                } else {
+                    println!("SHA{} ({}) = {}", bit_length, file, checksum_str);
+                }
             } else {
                 println!("{checksum_str} {file}");
             }
@@ -184,7 +194,7 @@ fn checksum_files(checksum: Checksum, args: &Args, file: String) -> Result<()> {
 
         Checksum::Blake2b => {
             if args.bsd {
-                println!("BLAKE2b-{} ({}) = {}", args.bit_length, file, checksum_str);
+                println!("BLAKE2b-{} ({}) = {}", bit_length, file, checksum_str);
             } else {
                 println!("{checksum_str}  {file}",);
             }
@@ -200,7 +210,7 @@ fn checksum_files(checksum: Checksum, args: &Args, file: String) -> Result<()> {
 
         Checksum::Sha3 => {
             if args.bsd {
-                println!("SHA3-{} ({}) = {}", args.bit_length, file, checksum_str);
+                println!("SHA3-{} ({}) = {}", bit_length, file, checksum_str);
             } else {
                 println!("{checksum_str}  {file}",);
             }

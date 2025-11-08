@@ -8,7 +8,7 @@ use std::fmt::Write;
 /// Blake2b hasher that supports runtime-specified bit lengths (multiples of 8, up to 512).
 pub struct Blake2b<'a> {
     /// Bit length of the checksum (e.g. 256, 512, 384, 224, 128, ... but must be multiple of 8)
-    checksum_type: i32,
+    checksum_type: usize,
 
     /// Data to process
     data: &'a [u8],
@@ -26,7 +26,7 @@ impl Hasher for Blake2b<'_> {
     fn get_checksum(&self) -> String {
         // validate, even though this should already be validated in new(), but double-check here
         // just in case
-        let bits = self.checksum_type as usize;
+        let bits = self.checksum_type;
         if bits == 0 || !bits.is_multiple_of(8) || bits > 512 {
             unreachable!();
         }
@@ -52,8 +52,8 @@ impl Hasher for Blake2b<'_> {
 }
 
 impl<'a> Blake2b<'a> {
-    pub fn new(checksum_type: i32, data: &'a [u8]) -> Result<Self, B2SumError> {
-        if !Self::VALID_VALUES.contains(&(checksum_type as usize)) {
+    pub fn new(checksum_type: usize, data: &'a [u8]) -> Result<Self, B2SumError> {
+        if !Self::VALID_VALUES.contains(&(checksum_type)) {
             return Err(B2SumError::InvalidChecksumType(checksum_type));
         }
 

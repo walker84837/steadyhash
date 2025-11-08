@@ -4,7 +4,7 @@ use sha3::{Digest, Sha3_224, Sha3_256, Sha3_384, Sha3_512};
 
 pub struct Sha3Sum<'a> {
     /// Bit length of the checksum
-    checksum_type: i32,
+    checksum_type: usize,
 
     /// Data to process
     data: &'a [u8],
@@ -41,8 +41,8 @@ impl Hasher for Sha3Sum<'_> {
 }
 
 impl<'a> Sha3Sum<'a> {
-    pub fn new(checksum_type: i32, data: &'a [u8]) -> Result<Sha3Sum<'a>, Sha3SumError> {
-        if !Self::VALID_VALUES.contains(&(checksum_type as usize)) {
+    pub fn new(checksum_type: usize, data: &'a [u8]) -> Result<Sha3Sum<'a>, Sha3SumError> {
+        if !Self::VALID_VALUES.contains(&(checksum_type)) {
             return Err(Sha3SumError::InvalidChecksumType(checksum_type));
         }
 
