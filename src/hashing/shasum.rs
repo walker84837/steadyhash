@@ -24,7 +24,7 @@ pub struct ShaSum<'a> {
     data: &'a [u8],
 }
 
-impl<'a> Hasher for ShaSum<'a> {
+impl Hasher for ShaSum<'_> {
     const VALID_VALUES: &'static [usize] = &[160, 256, 512];
 
     fn get_checksum(&self) -> String {

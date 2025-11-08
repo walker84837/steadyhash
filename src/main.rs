@@ -124,7 +124,7 @@ fn check_files(checksum: Checksum, args: &Args, file: String) -> Result<()> {
             continue;
         }
 
-        let (expected_checksum, file_path) = if parts.len() >= 2 && parts[1].starts_with("(") {
+        let (expected_checksum, file_path) = if parts.len() >= 2 && parts[1].starts_with('(') {
             // BSD style
 
             let file_path = parts[1].trim_start_matches('(').trim_end_matches(')');
@@ -145,9 +145,9 @@ fn check_files(checksum: Checksum, args: &Args, file: String) -> Result<()> {
         let actual_checksum = calculate_checksum(checksum, args.bit_length, &file_contents)?;
 
         if actual_checksum == expected_checksum {
-            println!("{}: OK", file_path);
+            println!("{file_path}: OK");
         } else {
-            println!("{}: FAILED", file_path);
+            println!("{file_path}: FAILED");
         }
     }
 
@@ -157,12 +157,12 @@ fn check_files(checksum: Checksum, args: &Args, file: String) -> Result<()> {
 fn checksum_files(checksum: Checksum, args: &Args, file: String) -> Result<()> {
     let mut contents = Vec::new();
 
-    if !args.stdin {
+    if args.stdin {
+        io::stdin().read_to_end(&mut contents)?;
+    } else {
         let mut reader = BufReader::new(File::open(&file)?);
 
         reader.read_to_end(&mut contents)?;
-    } else {
-        io::stdin().read_to_end(&mut contents)?;
     }
 
     let checksum_str = calculate_checksum(checksum, args.bit_length, &contents)?;
@@ -176,9 +176,9 @@ fn checksum_files(checksum: Checksum, args: &Args, file: String) -> Result<()> {
             };
 
             if args.bsd {
-                println!("SHA{} ({}) = {}", r#type, file, checksum_str);
+                println!("SHA{type} ({file}) = {checksum_str}");
             } else {
-                println!("{} {}", checksum_str, file);
+                println!("{checksum_str} {file}");
             }
         }
 
@@ -186,15 +186,15 @@ fn checksum_files(checksum: Checksum, args: &Args, file: String) -> Result<()> {
             if args.bsd {
                 println!("BLAKE2b-{} ({}) = {}", args.bit_length, file, checksum_str);
             } else {
-                println!("{}  {}", checksum_str, file,);
+                println!("{checksum_str}  {file}",);
             }
         }
 
         Checksum::Md5 => {
             if args.bsd {
-                println!("MD5 ({}) = {}", file, checksum_str);
+                println!("MD5 ({file}) = {checksum_str}");
             } else {
-                println!("{}  {}", checksum_str, file,);
+                println!("{checksum_str}  {file}",);
             }
         }
 
@@ -202,7 +202,7 @@ fn checksum_files(checksum: Checksum, args: &Args, file: String) -> Result<()> {
             if args.bsd {
                 println!("SHA3-{} ({}) = {}", args.bit_length, file, checksum_str);
             } else {
-                println!("{}  {}", checksum_str, file,);
+                println!("{checksum_str}  {file}",);
             }
         }
     }

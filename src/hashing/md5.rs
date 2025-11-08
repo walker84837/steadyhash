@@ -5,12 +5,12 @@ pub struct Md5Sum<'a> {
     data: &'a [u8],
 }
 
-impl<'a> Hasher for Md5Sum<'a> {
+impl Hasher for Md5Sum<'_> {
     const VALID_VALUES: &'static [usize] = &[128];
 
     fn get_checksum(&self) -> String {
         let a = md5::compute(self.data);
-        format!("{:x}", a)
+        format!("{a:x}")
     }
 }
 

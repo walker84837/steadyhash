@@ -10,7 +10,7 @@ pub struct Sha3Sum<'a> {
     data: &'a [u8],
 }
 
-impl<'a> Hasher for Sha3Sum<'a> {
+impl Hasher for Sha3Sum<'_> {
     const VALID_VALUES: &'static [usize] = &[224, 256, 384, 512];
 
     fn get_checksum(&self) -> String {

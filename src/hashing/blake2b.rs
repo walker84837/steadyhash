@@ -14,7 +14,7 @@ pub struct Blake2b<'a> {
     data: &'a [u8],
 }
 
-impl<'a> Hasher for Blake2b<'a> {
+impl Hasher for Blake2b<'_> {
     // all valid multiples of 8 from 8..=512 (8 * 1 .. 8 * 64)
     const VALID_VALUES: &'static [usize] = &[
         8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168,
@@ -44,7 +44,7 @@ impl<'a> Hasher for Blake2b<'a> {
         // hex-encode without extra dependency
         let mut s = String::with_capacity(out_bytes * 2);
         for b in buf {
-            write!(&mut s, "{:02x}", b).expect("writing to string cannot fail");
+            write!(&mut s, "{b:02x}").expect("writing to string cannot fail");
         }
 
         s
