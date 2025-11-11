@@ -1,3 +1,4 @@
+// TODO: errors doesn't seem all that descriptive whenever an invalid checksum type is provided
 use thiserror::Error;
 
 #[derive(Error, Debug)]
