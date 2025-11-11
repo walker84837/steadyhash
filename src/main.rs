@@ -60,6 +60,16 @@ enum Checksum {
     Blake2b,
 }
 
+impl Checksum {
+    const fn default_bits(self) -> usize {
+        match self {
+            Checksum::Md5 => 128,
+            // sensible default
+            _ => 256,
+        }
+    }
+}
+
 impl Display for Checksum {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -100,15 +110,26 @@ fn calculate_checksum(checksum: Checksum, bit_length: usize, data: &[u8]) -> Res
     })
 }
 
+fn print_checksum(checksum: Checksum, bit_length: usize, file: &Path, checksum_str: &str, bsd: bool) {
+    let name = match checksum {
+        Checksum::Sha => if bit_length == 160 { "SHA1" } else { &format!("SHA{}", bit_length) },
+        Checksum::Sha3 => &format!("SHA3-{}", bit_length),
+        Checksum::Blake2b => &format!("BLAKE2b-{}", bit_length),
+        Checksum::Md5 => "MD5",
+    };
+
+    if bsd {
+        println!("{name} ({}) = {checksum_str}", file.display());
+    } else {
+        println!("{checksum_str}  {}", file.display());
+    }
+}
+
 fn main() -> Result<(), Error> {
     let args = Args::parse();
 
     let checksum = Checksum::from_str(&args.checksum_type)?;
-    let bit_length = if checksum == Checksum::Md5 {
-        128
-    } else {
-        args.bit_length.unwrap()
-    };
+    let bit_length = args.bit_length.unwrap_or_else(|| checksum.default_bits());
 
     for file in &args.file_path {
         if args.check {
@@ -177,54 +198,12 @@ fn checksum_files(
         io::stdin().read_to_end(&mut contents)?;
     } else {
         let mut reader = BufReader::new(File::open(file)?);
-
         reader.read_to_end(&mut contents)?;
     }
 
     let checksum_str = calculate_checksum(checksum, bit_length, &contents)?;
+    print_checksum(checksum, bit_length, file, &checksum_str, args.bsd);
 
-    match checksum {
-        Checksum::Sha => {
-            if args.bsd {
-                if bit_length == 160 {
-                    println!("SHA1 ({}) = {}", file.display(), checksum_str);
-                } else {
-                    println!("SHA{} ({}) = {}", bit_length, file.display(), checksum_str);
-                }
-            } else {
-                println!("{checksum_str} {}", file.display());
-            }
-        }
-
-        Checksum::Blake2b => {
-            if args.bsd {
-                println!(
-                    "BLAKE2b-{} ({}) = {}",
-                    bit_length,
-                    file.display(),
-                    checksum_str
-                );
-            } else {
-                println!("{checksum_str}  {}", file.display());
-            }
-        }
-
-        Checksum::Md5 => {
-            if args.bsd {
-                println!("MD5 ({}) = {checksum_str}", file.display());
-            } else {
-                println!("{checksum_str}  {}", file.display());
-            }
-        }
-
-        Checksum::Sha3 => {
-            if args.bsd {
-                println!("SHA3-{bit_length} ({}) = {checksum_str}", file.display());
-            } else {
-                println!("{checksum_str}  {}", file.display());
-            }
-        }
-    }
     Ok(())
 }
 
