@@ -38,7 +38,6 @@ impl Hasher for ShaSum<'_> {
 }
 
 impl<'a> ShaSum<'a> {
-    /// Keep `new(checksum_type: i32, ...)` to preserve external API.
     pub fn new(checksum_type: usize, data: &'a [u8]) -> Result<ShaSum<'a>, ShaSumError> {
         let bits = checksum_type;
         if !Self::VALID_VALUES.contains(&bits) {
