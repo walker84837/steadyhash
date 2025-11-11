@@ -1,7 +1,11 @@
 use anyhow::Error;
 use clap::Parser;
 use std::{
-    fmt::Display, fs::File, io::{self, BufReader, Read}, path::{Path, PathBuf}, str::FromStr
+    fmt::Display,
+    fs::File,
+    io::{self, BufReader, Read},
+    path::{Path, PathBuf},
+    str::FromStr,
 };
 
 mod errors;
@@ -62,7 +66,7 @@ impl Display for Checksum {
             Checksum::Blake2b => write!(f, "BLAKE2b"),
             Checksum::Md5 => write!(f, "MD5"),
             Checksum::Sha => write!(f, "SHA"),
-            Checksum::Sha3 => write!(f, "SHA3")
+            Checksum::Sha3 => write!(f, "SHA3"),
         }
     }
 }
@@ -161,13 +165,18 @@ fn check_files(checksum: Checksum, file: &Path, bit_length: usize) -> Result<(),
     Ok(())
 }
 
-fn checksum_files(checksum: Checksum, args: &Args, file: &Path, bit_length: usize) -> Result<(), Error> {
+fn checksum_files(
+    checksum: Checksum,
+    args: &Args,
+    file: &Path,
+    bit_length: usize,
+) -> Result<(), Error> {
     let mut contents = Vec::new();
 
     if args.stdin {
         io::stdin().read_to_end(&mut contents)?;
     } else {
-        let mut reader = BufReader::new(File::open(&file)?);
+        let mut reader = BufReader::new(File::open(file)?);
 
         reader.read_to_end(&mut contents)?;
     }
@@ -189,7 +198,12 @@ fn checksum_files(checksum: Checksum, args: &Args, file: &Path, bit_length: usiz
 
         Checksum::Blake2b => {
             if args.bsd {
-                println!("BLAKE2b-{} ({}) = {}", bit_length, file.display(), checksum_str);
+                println!(
+                    "BLAKE2b-{} ({}) = {}",
+                    bit_length,
+                    file.display(),
+                    checksum_str
+                );
             } else {
                 println!("{checksum_str}  {}", file.display());
             }
