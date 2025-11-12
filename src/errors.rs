@@ -1,11 +1,10 @@
-// TODO: errors doesn't seem all that descriptive whenever an invalid checksum type is provided
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum ShaSumError {
     /// Error indicating that an invalid SHA checksum type has been provided.
     #[error(
-        "Invalid checksum type 'SHA-{0}'. The only supported types are SHA1, SHA256 and SHA512"
+        "Invalid checksum type 'SHA-{0}'. Supported types are SHA-160 (SHA1), SHA-224, SHA-256, SHA-384 and SHA-512"
     )]
     InvalidChecksumType(usize),
 }
@@ -23,7 +22,7 @@ pub enum Sha3SumError {
 pub enum B2SumError {
     /// Error indicating that an invalid Blake2b checksum type has been provided.
     #[error(
-        "Invalid checksum type 'BLAKE2B-{0}'. The only supported types are BLAKE2B-256 and BLAKE2B-512"
+        "Invalid checksum type 'BLAKE2b-{0}'. Supported values are multiples of 8 from 8 up to 512 (inclusive)"
     )]
     InvalidChecksumType(usize),
 }
