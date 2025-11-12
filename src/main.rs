@@ -68,6 +68,36 @@ impl Checksum {
             _ => 256,
         }
     }
+
+    /// Hashes some data, given a bit length.
+    fn calculate(&self, bit_length: usize, data: impl AsRef<[u8]>) -> Result<String, Error> {
+        let data = data.as_ref();
+        Ok(match self {
+            Checksum::Sha => ShaSum::new(bit_length, data)?.get_checksum(),
+            Checksum::Blake2b => Blake2b::new(bit_length, data)?.get_checksum(),
+            // bit length gets ignored
+            Checksum::Md5 => Md5Sum::new(data).get_checksum(),
+            Checksum::Sha3 => Sha3Sum::new(bit_length, data)?.get_checksum(),
+        })
+    }
+
+    // Prints the checksum in an user-friendly way.
+    fn print(&self, bit_length: usize, file: &Path, checksum_str: impl AsRef<str>, bsd: bool) {
+        let name = match self {
+            Checksum::Sha => if bit_length == 160 { "SHA1" } else { &format!("SHA{}", bit_length) },
+            Checksum::Sha3 => &format!("SHA3-{}", bit_length),
+            Checksum::Blake2b => &format!("BLAKE2b-{}", bit_length),
+            Checksum::Md5 => "MD5",
+        };
+
+        let checksum_str = checksum_str.as_ref();
+
+        if bsd {
+            println!("{name} ({}) = {checksum_str}", file.display());
+        } else {
+            println!("{checksum_str}  {}", file.display());
+        }
+    }
 }
 
 impl Display for Checksum {
@@ -98,30 +128,6 @@ impl FromStr for Checksum {
         } else {
             Err(ParseChecksumError { value: s.into() })
         }
-    }
-}
-
-fn calculate_checksum(checksum: Checksum, bit_length: usize, data: &[u8]) -> Result<String, Error> {
-    Ok(match checksum {
-        Checksum::Sha => ShaSum::new(bit_length, data)?.get_checksum(),
-        Checksum::Blake2b => Blake2b::new(bit_length, data)?.get_checksum(),
-        Checksum::Md5 => Md5Sum::new(data).get_checksum(),
-        Checksum::Sha3 => Sha3Sum::new(bit_length, data)?.get_checksum(),
-    })
-}
-
-fn print_checksum(checksum: Checksum, bit_length: usize, file: &Path, checksum_str: &str, bsd: bool) {
-    let name = match checksum {
-        Checksum::Sha => if bit_length == 160 { "SHA1" } else { &format!("SHA{}", bit_length) },
-        Checksum::Sha3 => &format!("SHA3-{}", bit_length),
-        Checksum::Blake2b => &format!("BLAKE2b-{}", bit_length),
-        Checksum::Md5 => "MD5",
-    };
-
-    if bsd {
-        println!("{name} ({}) = {checksum_str}", file.display());
-    } else {
-        println!("{checksum_str}  {}", file.display());
     }
 }
 
@@ -174,7 +180,7 @@ fn check_files(checksum: Checksum, file: &Path, bit_length: usize) -> Result<(),
 
         reader.read_to_end(&mut file_contents)?;
 
-        let actual_checksum = calculate_checksum(checksum, bit_length, &file_contents)?;
+        let actual_checksum = checksum.calculate(bit_length, &file_contents)?;
 
         if actual_checksum == expected_checksum {
             println!("{file_path}: OK");
@@ -201,8 +207,8 @@ fn checksum_files(
         reader.read_to_end(&mut contents)?;
     }
 
-    let checksum_str = calculate_checksum(checksum, bit_length, &contents)?;
-    print_checksum(checksum, bit_length, file, &checksum_str, args.bsd);
+    let checksum_str = checksum.calculate(bit_length, &contents)?;
+    checksum.print(bit_length, file, &checksum_str, args.bsd);
 
     Ok(())
 }
